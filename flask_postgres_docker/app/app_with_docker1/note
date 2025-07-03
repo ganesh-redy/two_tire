@@ -1,0 +1,47 @@
+### **Flask + PostgreSQL in Docker (Without Docker Compose) – Key Notes**  
+
+1️⃣ **Set PostgreSQL Credentials in Dockerfile**  
+   ```dockerfile
+   ENV POSTGRES_USER=postgres
+   ENV POSTGRES_PASSWORD=password
+   ENV POSTGRES_DB=mydatabase
+   ENV POSTGRES_HOST=postgres_container
+   ```
+
+2️⃣ **Ensure Both Containers Are on the Same Network**  
+   ```bash
+   docker network create my_network
+   ```
+
+3️⃣ **Run PostgreSQL Container**  
+   ```bash
+   docker run -d --name postgres_container \
+     --network my_network \
+     -e POSTGRES_USER=postgres \
+     -e POSTGRES_PASSWORD=password \
+     -e POSTGRES_DB=mydatabase \
+     -v app1:/var/lib/postgresql/data \
+     -p 5432:5432 postgres:latest
+   ```
+
+4️⃣ **Run Flask Application Container**  
+   ```bash
+   docker run -d --name flask_container \
+     --network my_network \
+     -e POSTGRES_HOST=postgres_container \
+     -p 5001:5000 flask_app
+   ```
+
+5️⃣ **Flask App Should Use the Correct DB Host (`app.py`)**  
+   ```python
+   import os
+   POSTGRES_HOST = os.getenv("POSTGRES_HOST", "postgres_container")
+   app.config["SQLALCHEMY_DATABASE_URI"] = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:5432/{POSTGRES_DB}"
+   ```
+
+### **Important Notes:**  
+✅ `POSTGRES_HOST` in Flask **must match** PostgreSQL container name.  
+✅ Both containers **must be on the same network**.  
+✅ **Use environment variables** to pass database credentials.  
+
+🚀 **Now your Flask app can connect to PostgreSQL in Docker!**
